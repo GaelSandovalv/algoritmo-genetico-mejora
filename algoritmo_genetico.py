@@ -292,3 +292,75 @@ def mutacion_bloques(individuo, rng, longitud_maxima):
     if operacion == "mover":
         return mover_bloque_gaps(individuo, rng)
     return eliminar_columnas_gaps(individuo)
+
+
+def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
+                prob_mutacion=0.3, semilla=1, num_elite=4,
+                tam_torneo=3, paciencia=20):
+    """Algoritmo genetico MEJORADO con seis mejoras:
+
+    1. Cruza multipunto (3 a 5 puntos de corte).
+    2. Seleccion por torneo.
+    3. Criterio de eliminacion: solo la mejor mitad se reproduce.
+    4. Mutacion por bloques de gaps.
+    5. Inmigrantes aleatorios cuando hay estancamiento.
+    6. Elitismo: los mejores pasan intactos y tienen cruza garantizada.
+
+    Devuelve (mejor_individuo_encontrado, historial_de_mejor_fitness).
+    """
+    rng = random.Random(semilla)
+    longitud_inicial = max(len(s) for s in originales) + 6
+    longitud_maxima = 2 * longitud_inicial
+    poblacion = crear_poblacion(originales, tam_poblacion,
+                                longitud_inicial, rng)
+    historial = []
+    mejor_global = None
+    mejor_fit_global = float("-inf")
+    generaciones_sin_mejora = 0
+    for gen in range(generaciones):
+        fitnesses = [calcular_fitness(ind) for ind in poblacion]
+        for ind in poblacion:
+            if not validar_integridad(ind, originales):
+                raise ValueError(
+                    f"Integridad violada en AG mejorado, generacion {gen}")
+        # ordenar la poblacion de mejor a peor fitness
+        orden = sorted(range(len(poblacion)),
+                       key=lambda k: fitnesses[k], reverse=True)
+        poblacion = [poblacion[k] for k in orden]
+        fitnesses = [fitnesses[k] for k in orden]
+        fit_mejor = fitnesses[0]
+        historial.append(fit_mejor)
+        if fit_mejor > mejor_fit_global:
+            mejor_fit_global = fit_mejor
+            mejor_global = poblacion[0]
+            generaciones_sin_mejora = 0
+        else:
+            generaciones_sin_mejora += 1
+        # Mejora #3: solo la mejor mitad se usa como reserva de padres
+        reserva = poblacion[:max(2, tam_poblacion // 2)]
+        reserva_fit = fitnesses[:len(reserva)]
+        # Mejora #6: elitismo - los mejores pasan intactos
+        nueva = list(poblacion[:num_elite])
+        # Mejora #6: cada elite tiene cruza garantizada
+        for elite in poblacion[:num_elite]:
+            pareja = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
+            hijo = cruza_multipunto(elite, pareja, rng)
+            if rng.random() < prob_mutacion:
+                hijo = mutacion_bloques(hijo, rng, longitud_maxima)
+            nueva.append(hijo)
+        # Mejora #5: inmigrantes aleatorios si hay estancamiento
+        if generaciones_sin_mejora >= paciencia:
+            for _ in range(tam_poblacion // 5):
+                nueva.append(crear_individuo(originales,
+                                             longitud_inicial, rng))
+            generaciones_sin_mejora = 0
+        # rellenar el resto con cruza y mutacion
+        while len(nueva) < tam_poblacion:
+            p1 = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
+            p2 = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
+            hijo = cruza_multipunto(p1, p2, rng)
+            if rng.random() < prob_mutacion:
+                hijo = mutacion_bloques(hijo, rng, longitud_maxima)
+            nueva.append(hijo)
+        poblacion = nueva[:tam_poblacion]
+    return mejor_global, historial
