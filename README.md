@@ -14,9 +14,9 @@ pequeños). Generación tras generación, el fitness tiende a mejorar.
 
 ## El problema: alineamiento de secuencias
 
-Cada *individuo* es un alineamiento de 6 secuencias de ADN con gaps (`-`)
-insertados. El **fitness** usa la suma de pares: por cada par de filas y
-cada columna suma +1 si coinciden, -1 si difieren y -2 si una es gap.
+Cada *individuo* es un alineamiento de 4 secuencias de ADN cortas con gaps
+(`-`) insertados. El **fitness** usa la suma de pares: por cada par de filas
+y cada columna suma +1 si coinciden, -1 si difieren y -2 si una es gap.
 
 ## Validación de integridad
 
@@ -27,7 +27,7 @@ recupera exactamente la secuencia original.
 
 ## Las 6 mejoras del algoritmo mejorado
 
-1. **Cruza multipunto:** de 1 punto de corte a 3-5 puntos.
+1. **Cruza multipunto:** de 1 punto de corte a 3 puntos (más de dos).
 2. **Selección por torneo:** mejor presión selectiva que la ruleta.
 3. **Criterio de eliminación:** solo la mejor mitad se reproduce.
 4. **Mutación por bloques de gaps:** insertar, mover o eliminar columnas
@@ -42,8 +42,9 @@ pip install -r requirements.txt
 python algoritmo_genetico.py
 ```
 
-El programa imprime las secuencias, los resultados de ambos algoritmos, la
-comparación de fitness y genera `comparacion_fitness.png`.
+El programa imprime las secuencias, los resultados de ambos algoritmos y la
+comparación de fitness; además genera `comparacion_fitness.png` y la abre en
+el visor de imágenes del sistema.
 
 ## Resultados
 

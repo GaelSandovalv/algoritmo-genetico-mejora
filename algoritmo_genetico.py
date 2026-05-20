@@ -3,17 +3,18 @@
 Contiene dos versiones del algoritmo (base y mejorada) y una comparacion
 de su fitness. Ejecutar con: python algoritmo_genetico.py
 """
+import os
 import random
 
 import matplotlib
-matplotlib.use("Agg")  # backend sin ventana: guarda la grafica como imagen
+matplotlib.use("Agg")  # genera la grafica como imagen, sin depender de tkinter
 import matplotlib.pyplot as plt
 
 BASES = "ACGT"
 
 
-def generar_secuencias(semilla=42, n=6, longitud_ancestro=16):
-    """Genera n secuencias de ADN derivadas de un ancestro comun.
+def generar_secuencias(semilla=42, n=4, longitud_ancestro=12):
+    """Genera n secuencias de ADN cortas derivadas de un ancestro comun.
 
     Cada secuencia se obtiene aplicando sustituciones e indels al ancestro.
     Con la misma semilla siempre devuelve el mismo resultado.
@@ -23,13 +24,13 @@ def generar_secuencias(semilla=42, n=6, longitud_ancestro=16):
     secuencias = []
     for _ in range(n):
         s = list(ancestro)
-        for _ in range(rng.randint(2, 3)):          # sustituciones
+        for _ in range(rng.randint(1, 2)):          # sustituciones
             i = rng.randrange(len(s))
             s[i] = rng.choice(BASES)
-        for _ in range(rng.randint(0, 2)):          # eliminaciones
+        for _ in range(rng.randint(0, 1)):          # eliminaciones
             if len(s) > 1:
                 del s[rng.randrange(len(s))]
-        for _ in range(rng.randint(0, 2)):          # inserciones
+        for _ in range(rng.randint(0, 1)):          # inserciones
             s.insert(rng.randrange(len(s) + 1), rng.choice(BASES))
         secuencias.append("".join(s))
     return secuencias
@@ -385,8 +386,9 @@ def mostrar_resultado(nombre, individuo, originales):
     print()
 
 
-def graficar(hist_base, hist_mejorado, archivo):
-    """Genera la grafica de comparacion del fitness y la guarda."""
+def graficar(hist_base, hist_mejorado, archivo, mostrar=False):
+    """Genera la grafica de comparacion del fitness, la guarda como
+    imagen y, si mostrar es True, la abre en una ventana."""
     plt.figure(figsize=(10, 6))
     plt.plot(range(1, len(hist_base) + 1), hist_base,
              label="AG Base", color="#d62728")
@@ -400,10 +402,16 @@ def graficar(hist_base, hist_mejorado, archivo):
     plt.savefig(archivo, dpi=120, bbox_inches="tight")
     plt.close()
     print(f"Grafica guardada en: {archivo}")
+    if mostrar:
+        try:
+            os.startfile(os.path.abspath(archivo))
+        except Exception:
+            print("(No se pudo abrir la ventana; abre el archivo manualmente.)")
 
 
-def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=60,
-             generaciones=250, archivo="comparacion_fitness.png"):
+def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=40,
+             generaciones=100, archivo="comparacion_fitness.png",
+             mostrar=True):
     """Ejecuta el AG base y el mejorado con los mismos datos y parametros,
     imprime los resultados y genera la grafica de comparacion.
 
@@ -436,7 +444,7 @@ def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=60,
     print(f"  Mejora: {texto_mejora}")
     print()
 
-    graficar(hist_base, hist_mej, archivo)
+    graficar(hist_base, hist_mej, archivo, mostrar=mostrar)
     return hist_base, hist_mej
 
 
