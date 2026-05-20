@@ -1,8 +1,3 @@
-"""Algoritmo genetico para alineamiento multiple de secuencias de ADN.
-
-Contiene dos versiones del algoritmo (base y mejorada) y una comparacion
-de su fitness. Ejecutar con: python algoritmo_genetico.py
-"""
 import os
 import random
 
@@ -14,11 +9,6 @@ BASES = "ACGT"
 
 
 def generar_secuencias(semilla=42, n=4, longitud_ancestro=12):
-    """Genera n secuencias de ADN cortas derivadas de un ancestro comun.
-
-    Cada secuencia se obtiene aplicando sustituciones e indels al ancestro.
-    Con la misma semilla siempre devuelve el mismo resultado.
-    """
     rng = random.Random(semilla)
     ancestro = [rng.choice(BASES) for _ in range(longitud_ancestro)]
     secuencias = []
@@ -37,9 +27,6 @@ def generar_secuencias(semilla=42, n=4, longitud_ancestro=12):
 
 
 def validar_integridad(individuo, originales):
-    """Comprueba que al quitar los gaps de cada fila se recupera la
-    secuencia original. Devuelve True solo si todas las filas coinciden.
-    """
     if len(individuo) != len(originales):
         return False
     for fila, original in zip(individuo, originales):
@@ -49,12 +36,6 @@ def validar_integridad(individuo, originales):
 
 
 def calcular_fitness(individuo):
-    """Calcula el fitness de un alineamiento con la suma de pares.
-
-    Por cada par de filas y cada columna: +1 coincidencia, -1 desajuste,
-    -2 si una es gap, 0 si ambas son gap. Todas las filas deben tener
-    la misma longitud.
-    """
     n = len(individuo)
     if n == 0:
         return 0
@@ -77,16 +58,11 @@ def calcular_fitness(individuo):
 
 
 def igualar_longitud(individuo):
-    """Rellena cada fila con gaps al final hasta que todas midan lo mismo."""
     longitud = max(len(fila) for fila in individuo)
     return [fila + "-" * (longitud - len(fila)) for fila in individuo]
 
 
 def crear_individuo(originales, longitud, rng):
-    """Crea un individuo insertando gaps al azar en cada secuencia hasta
-    alcanzar la longitud indicada. 'longitud' debe ser >= la secuencia
-    mas larga.
-    """
     individuo = []
     for original in originales:
         fila = list(original)
@@ -97,16 +73,11 @@ def crear_individuo(originales, longitud, rng):
 
 
 def crear_poblacion(originales, tam_poblacion, longitud, rng):
-    """Crea una poblacion de individuos aleatorios."""
     return [crear_individuo(originales, longitud, rng)
             for _ in range(tam_poblacion)]
 
 
 def seleccion_ruleta(poblacion, fitnesses, rng):
-    """Selecciona un individuo con probabilidad proporcional a su fitness.
-
-    Los fitness se desplazan para que todos los pesos sean positivos.
-    """
     minimo = min(fitnesses)
     pesos = [f - minimo + 1 for f in fitnesses]
     total = sum(pesos)
@@ -120,10 +91,6 @@ def seleccion_ruleta(poblacion, fitnesses, rng):
 
 
 def cruza_un_punto(padre1, padre2, rng):
-    """Cruza con un punto de corte sobre las filas: el hijo toma las
-    primeras filas de un padre y el resto del otro. Como cada fila se
-    copia intacta de un padre, la integridad se conserva.
-    """
     n = len(padre1)
     punto = rng.randint(1, n - 1)
     hijo = padre1[:punto] + padre2[punto:]
@@ -131,9 +98,6 @@ def cruza_un_punto(padre1, padre2, rng):
 
 
 def mutacion_mover_gap(individuo, rng):
-    """Mueve un solo gap a otra posicion dentro de una fila al azar.
-    No cambia la longitud de la fila, asi que la integridad se conserva.
-    """
     individuo = list(individuo)
     indices_fila = list(range(len(individuo)))
     rng.shuffle(indices_fila)
@@ -151,14 +115,6 @@ def mutacion_mover_gap(individuo, rng):
 
 def ag_base(originales, tam_poblacion=60, generaciones=250,
             prob_mutacion=0.3, semilla=1):
-    """Algoritmo genetico BASE (estandar).
-
-    Seleccion por ruleta, cruza de un punto, mutacion que mueve un gap,
-    reemplazo generacional y sin elitismo.
-
-    Devuelve (mejor_individuo_encontrado, historial_de_mejor_fitness).
-    El historial guarda el mejor fitness de la poblacion en cada generacion.
-    """
     rng = random.Random(semilla)
     longitud = max(len(s) for s in originales) + 6
     poblacion = crear_poblacion(originales, tam_poblacion, longitud, rng)
@@ -190,9 +146,6 @@ def ag_base(originales, tam_poblacion=60, generaciones=250,
 
 
 def seleccion_torneo(poblacion, fitnesses, rng, tam_torneo=3):
-    """Mejora 1 (seleccion por torneo): toma tam_torneo individuos
-    distintos al azar y devuelve el de mayor fitness.
-    """
     k = min(tam_torneo, len(poblacion))
     indices = rng.sample(range(len(poblacion)), k)
     mejor = max(indices, key=lambda idx: fitnesses[idx])
@@ -200,9 +153,6 @@ def seleccion_torneo(poblacion, fitnesses, rng, tam_torneo=3):
 
 
 def insertar_bloque_gaps(individuo, rng, tam_bloque=3):
-    """Inserta un bloque de gaps en una fila al azar. Las demas filas se
-    rellenan con gaps finales para igualar la longitud.
-    """
     individuo = list(individuo)
     idx = rng.randrange(len(individuo))
     fila = list(individuo[idx])
@@ -214,9 +164,6 @@ def insertar_bloque_gaps(individuo, rng, tam_bloque=3):
 
 
 def mover_bloque_gaps(individuo, rng, tam_bloque=3):
-    """Mueve un bloque contiguo de gaps a otra posicion dentro de la
-    misma fila. No cambia la longitud de la fila.
-    """
     individuo = list(individuo)
     indices = list(range(len(individuo)))
     rng.shuffle(indices)
@@ -247,7 +194,6 @@ def mover_bloque_gaps(individuo, rng, tam_bloque=3):
 
 
 def eliminar_columnas_gaps(individuo):
-    """Elimina las columnas que son gap en todas las filas (compactacion)."""
     individuo = igualar_longitud(individuo)
     longitud = len(individuo[0])
     quitar = {c for c in range(longitud)
@@ -259,11 +205,6 @@ def eliminar_columnas_gaps(individuo):
 
 
 def mutacion_bloques(individuo, rng, longitud_maxima):
-    """Mejora 2 (mutacion por bloques de gaps): elige al azar entre
-    insertar un bloque, mover un bloque o eliminar columnas de solo gaps.
-    Si el individuo ya alcanzo longitud_maxima, compacta en lugar de
-    insertar para no crecer sin control.
-    """
     operacion = rng.choice(["insertar", "mover", "eliminar"])
     longitud_actual = max(len(f) for f in individuo)
     if operacion == "insertar" and longitud_actual + 3 > longitud_maxima:
@@ -277,15 +218,6 @@ def mutacion_bloques(individuo, rng, longitud_maxima):
 
 def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
                 prob_mutacion=0.3, semilla=1, num_elite=4, tam_torneo=3):
-    """Algoritmo genetico MEJORADO con tres mejoras sobre el base:
-
-    1. Seleccion por torneo en lugar de ruleta.
-    2. Mutacion por bloques de gaps en lugar de mover un solo gap.
-    3. Elitismo: los mejores individuos pasan intactos a la siguiente
-       generacion, asi nunca se pierde la mejor solucion encontrada.
-
-    Devuelve (mejor_individuo_encontrado, historial_de_mejor_fitness).
-    """
     rng = random.Random(semilla)
     longitud_inicial = max(len(s) for s in originales) + 6
     longitud_maxima = 2 * longitud_inicial
@@ -322,12 +254,6 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
 
 
 def mostrar_resultado(nombre, individuo, originales):
-    """Imprime el fitness, el alineamiento y la validacion de integridad.
-
-    Compacta el alineamiento (quita columnas de solo gaps) antes de
-    mostrarlo: esas columnas no aportan al fitness y solo estorban a la
-    lectura. Quitarlas no altera el fitness ni la integridad.
-    """
     individuo = eliminar_columnas_gaps(individuo)
     print(f"--- {nombre} ---")
     print(f"  Fitness: {calcular_fitness(individuo)}")
@@ -340,8 +266,6 @@ def mostrar_resultado(nombre, individuo, originales):
 
 
 def graficar(hist_base, hist_mejorado, archivo, mostrar=False):
-    """Genera la grafica de comparacion del fitness, la guarda como
-    imagen y, si mostrar es True, la abre en una ventana."""
     plt.figure(figsize=(10, 6))
     plt.plot(range(1, len(hist_base) + 1), hist_base,
              label="AG Base", color="#d62728")
@@ -365,11 +289,6 @@ def graficar(hist_base, hist_mejorado, archivo, mostrar=False):
 def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=40,
              generaciones=100, archivo="comparacion_fitness.png",
              mostrar=True):
-    """Ejecuta el AG base y el mejorado con los mismos datos y parametros,
-    imprime los resultados y genera la grafica de comparacion.
-
-    Devuelve (historial_base, historial_mejorado).
-    """
     originales = generar_secuencias(semilla_datos)
     print("Secuencias de ADN generadas:")
     for i, s in enumerate(originales):
