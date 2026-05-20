@@ -186,3 +186,33 @@ def ag_base(originales, tam_poblacion=60, generaciones=250,
             nueva.append(hijo)
         poblacion = nueva
     return mejor_global, historial
+
+
+def seleccion_torneo(poblacion, fitnesses, rng, tam_torneo=3):
+    """Mejora #2: seleccion por torneo. Toma tam_torneo individuos
+    distintos al azar y devuelve el de mayor fitness.
+    """
+    k = min(tam_torneo, len(poblacion))
+    indices = rng.sample(range(len(poblacion)), k)
+    mejor = max(indices, key=lambda idx: fitnesses[idx])
+    return poblacion[mejor]
+
+
+def cruza_multipunto(padre1, padre2, rng):
+    """Mejora #1: cruza con varios puntos de corte (3 a 5) sobre las
+    filas, tomando segmentos alternados de cada padre. Cada fila se copia
+    intacta de un padre, asi que la integridad se conserva.
+    """
+    n = len(padre1)
+    max_cortes = min(5, n - 1)
+    num_cortes = rng.randint(min(3, max_cortes), max_cortes)
+    puntos = sorted(rng.sample(range(1, n), num_cortes))
+    hijo = []
+    usar_padre1 = True
+    inicio = 0
+    for punto in puntos + [n]:
+        fuente = padre1 if usar_padre1 else padre2
+        hijo.extend(fuente[inicio:punto])
+        inicio = punto
+        usar_padre1 = not usar_padre1
+    return igualar_longitud(hijo)
