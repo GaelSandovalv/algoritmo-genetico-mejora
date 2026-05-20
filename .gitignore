@@ -1,0 +1,13 @@
+# Internos de Claude Code y documentos de trabajo
+.claude/
+docs/
+GUION_VIDEO.md
+ENTREGA.md
+
+# Pruebas de desarrollo
+test_algoritmo_genetico.py
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
