@@ -45,3 +45,31 @@ def validar_integridad(individuo, originales):
         if fila.replace("-", "") != original:
             return False
     return True
+
+
+def calcular_fitness(individuo):
+    """Calcula el fitness de un alineamiento con la suma de pares.
+
+    Por cada par de filas y cada columna: +1 coincidencia, -1 desajuste,
+    -2 si una es gap, 0 si ambas son gap. Todas las filas deben tener
+    la misma longitud.
+    """
+    n = len(individuo)
+    if n == 0:
+        return 0
+    longitud = len(individuo[0])
+    puntaje = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            for c in range(longitud):
+                a = individuo[i][c]
+                b = individuo[j][c]
+                if a == "-" and b == "-":
+                    puntaje += 0
+                elif a == "-" or b == "-":
+                    puntaje += -2
+                elif a == b:
+                    puntaje += 1
+                else:
+                    puntaje += -1
+    return puntaje
