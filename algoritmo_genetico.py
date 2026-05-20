@@ -364,3 +364,75 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
             nueva.append(hijo)
         poblacion = nueva[:tam_poblacion]
     return mejor_global, historial
+
+
+def mostrar_resultado(nombre, individuo, originales):
+    """Imprime el fitness, el alineamiento y la validacion de integridad."""
+    individuo = igualar_longitud(individuo)
+    print(f"--- {nombre} ---")
+    print(f"  Fitness: {calcular_fitness(individuo)}")
+    print("  Alineamiento:")
+    for i, fila in enumerate(individuo):
+        print(f"    S{i + 1}: {fila}")
+    ok = validar_integridad(individuo, originales)
+    print(f"  Validacion de integridad: {'CORRECTA' if ok else 'FALLIDA'}")
+    print()
+
+
+def graficar(hist_base, hist_mejorado, archivo):
+    """Genera la grafica de comparacion del fitness y la guarda."""
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, len(hist_base) + 1), hist_base,
+             label="AG Base", color="#d62728")
+    plt.plot(range(1, len(hist_mejorado) + 1), hist_mejorado,
+             label="AG Mejorado", color="#2ca02c")
+    plt.xlabel("Generacion")
+    plt.ylabel("Mejor fitness")
+    plt.title("Comparacion de fitness: AG Base vs AG Mejorado")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig(archivo, dpi=120, bbox_inches="tight")
+    plt.close()
+    print(f"Grafica guardada en: {archivo}")
+
+
+def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=60,
+             generaciones=250, archivo="comparacion_fitness.png"):
+    """Ejecuta el AG base y el mejorado con los mismos datos y parametros,
+    imprime los resultados y genera la grafica de comparacion.
+
+    Devuelve (historial_base, historial_mejorado).
+    """
+    originales = generar_secuencias(semilla_datos)
+    print("Secuencias de ADN generadas:")
+    for i, s in enumerate(originales):
+        print(f"  S{i + 1}: {s}")
+    print()
+
+    mejor_base, hist_base = ag_base(originales, tam_poblacion,
+                                    generaciones, semilla=semilla_ag)
+    mostrar_resultado("AG BASE", mejor_base, originales)
+
+    mejor_mej, hist_mej = ag_mejorado(originales, tam_poblacion,
+                                      generaciones, semilla=semilla_ag)
+    mostrar_resultado("AG MEJORADO", mejor_mej, originales)
+
+    fit_base = calcular_fitness(igualar_longitud(mejor_base))
+    fit_mej = calcular_fitness(igualar_longitud(mejor_mej))
+    if fit_base != 0:
+        mejora = (fit_mej - fit_base) / abs(fit_base) * 100
+        texto_mejora = f"{mejora:+.1f}%"
+    else:
+        texto_mejora = "no calculable (fitness base = 0)"
+    print("=== COMPARACION ===")
+    print(f"  Fitness AG Base:     {fit_base}")
+    print(f"  Fitness AG Mejorado: {fit_mej}")
+    print(f"  Mejora: {texto_mejora}")
+    print()
+
+    graficar(hist_base, hist_mej, archivo)
+    return hist_base, hist_mej
+
+
+if __name__ == "__main__":
+    comparar()
