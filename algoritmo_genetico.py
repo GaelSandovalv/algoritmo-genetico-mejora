@@ -99,3 +99,50 @@ def crear_poblacion(originales, tam_poblacion, longitud, rng):
     """Crea una poblacion de individuos aleatorios."""
     return [crear_individuo(originales, longitud, rng)
             for _ in range(tam_poblacion)]
+
+
+def seleccion_ruleta(poblacion, fitnesses, rng):
+    """Selecciona un individuo con probabilidad proporcional a su fitness.
+
+    Los fitness se desplazan para que todos los pesos sean positivos.
+    """
+    minimo = min(fitnesses)
+    pesos = [f - minimo + 1 for f in fitnesses]
+    total = sum(pesos)
+    r = rng.uniform(0, total)
+    acumulado = 0
+    for individuo, peso in zip(poblacion, pesos):
+        acumulado += peso
+        if acumulado >= r:
+            return individuo
+    return poblacion[-1]
+
+
+def cruza_un_punto(padre1, padre2, rng):
+    """Cruza con un punto de corte sobre las filas: el hijo toma las
+    primeras filas de un padre y el resto del otro. Como cada fila se
+    copia intacta de un padre, la integridad se conserva.
+    """
+    n = len(padre1)
+    punto = rng.randint(1, n - 1)
+    hijo = padre1[:punto] + padre2[punto:]
+    return igualar_longitud(hijo)
+
+
+def mutacion_mover_gap(individuo, rng):
+    """Mueve un solo gap a otra posicion dentro de una fila al azar.
+    No cambia la longitud de la fila, asi que la integridad se conserva.
+    """
+    individuo = list(individuo)
+    indices_fila = list(range(len(individuo)))
+    rng.shuffle(indices_fila)
+    for idx in indices_fila:
+        fila = list(individuo[idx])
+        posiciones_gap = [k for k, ch in enumerate(fila) if ch == "-"]
+        if not posiciones_gap:
+            continue
+        del fila[rng.choice(posiciones_gap)]
+        fila.insert(rng.randrange(len(fila) + 1), "-")
+        individuo[idx] = "".join(fila)
+        return individuo
+    return individuo
