@@ -33,3 +33,15 @@ def generar_secuencias(semilla=42, n=6, longitud_ancestro=16):
             s.insert(rng.randrange(len(s) + 1), rng.choice(BASES))
         secuencias.append("".join(s))
     return secuencias
+
+
+def validar_integridad(individuo, originales):
+    """Comprueba que al quitar los gaps de cada fila se recupera la
+    secuencia original. Devuelve True solo si todas las filas coinciden.
+    """
+    if len(individuo) != len(originales):
+        return False
+    for fila, original in zip(individuo, originales):
+        if fila.replace("-", "") != original:
+            return False
+    return True
