@@ -146,3 +146,43 @@ def mutacion_mover_gap(individuo, rng):
         individuo[idx] = "".join(fila)
         return individuo
     return individuo
+
+
+def ag_base(originales, tam_poblacion=60, generaciones=250,
+            prob_mutacion=0.3, semilla=1):
+    """Algoritmo genetico BASE (estandar).
+
+    Seleccion por ruleta, cruza de un punto, mutacion que mueve un gap,
+    reemplazo generacional y sin elitismo.
+
+    Devuelve (mejor_individuo_encontrado, historial_de_mejor_fitness).
+    El historial guarda el mejor fitness de la poblacion en cada generacion.
+    """
+    rng = random.Random(semilla)
+    longitud = max(len(s) for s in originales) + 6
+    poblacion = crear_poblacion(originales, tam_poblacion, longitud, rng)
+    historial = []
+    mejor_global = None
+    mejor_fit_global = float("-inf")
+    for gen in range(generaciones):
+        fitnesses = [calcular_fitness(ind) for ind in poblacion]
+        for ind in poblacion:
+            if not validar_integridad(ind, originales):
+                raise ValueError(
+                    f"Integridad violada en AG base, generacion {gen}")
+        idx_mejor = max(range(len(poblacion)), key=lambda k: fitnesses[k])
+        fit_mejor = fitnesses[idx_mejor]
+        historial.append(fit_mejor)
+        if fit_mejor > mejor_fit_global:
+            mejor_fit_global = fit_mejor
+            mejor_global = poblacion[idx_mejor]
+        nueva = []
+        while len(nueva) < tam_poblacion:
+            p1 = seleccion_ruleta(poblacion, fitnesses, rng)
+            p2 = seleccion_ruleta(poblacion, fitnesses, rng)
+            hijo = cruza_un_punto(p1, p2, rng)
+            if rng.random() < prob_mutacion:
+                hijo = mutacion_mover_gap(hijo, rng)
+            nueva.append(hijo)
+        poblacion = nueva
+    return mejor_global, historial
