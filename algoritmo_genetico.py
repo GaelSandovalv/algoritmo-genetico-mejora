@@ -285,7 +285,8 @@ def mutacion_bloques(individuo, rng, longitud_maxima):
     """
     operacion = rng.choice(["insertar", "mover", "eliminar"])
     longitud_actual = max(len(f) for f in individuo)
-    if operacion == "insertar" and longitud_actual >= longitud_maxima:
+    # insertar_bloque_gaps anade 3 gaps: si eso superaria el limite, compactar
+    if operacion == "insertar" and longitud_actual + 3 > longitud_maxima:
         operacion = "eliminar"
     if operacion == "insertar":
         return insertar_bloque_gaps(individuo, rng)
@@ -367,8 +368,13 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
 
 
 def mostrar_resultado(nombre, individuo, originales):
-    """Imprime el fitness, el alineamiento y la validacion de integridad."""
-    individuo = igualar_longitud(individuo)
+    """Imprime el fitness, el alineamiento y la validacion de integridad.
+
+    Compacta el alineamiento (quita columnas de solo gaps) antes de
+    mostrarlo: esas columnas no aportan al fitness y solo estorban a la
+    lectura. Quitarlas no altera el fitness ni la integridad.
+    """
+    individuo = eliminar_columnas_gaps(individuo)
     print(f"--- {nombre} ---")
     print(f"  Fitness: {calcular_fitness(individuo)}")
     print("  Alineamiento:")
