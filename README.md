@@ -25,15 +25,14 @@ alteran ni reordenan las letras A/C/G/T. La función `validar_integridad`
 comprueba en cada generación que, al quitar los gaps de cada fila, se
 recupera exactamente la secuencia original.
 
-## Las 6 mejoras del algoritmo mejorado
+## Las 3 mejoras del algoritmo mejorado
 
-1. **Cruza multipunto:** de 1 punto de corte a 3 puntos (más de dos).
-2. **Selección por torneo:** mejor presión selectiva que la ruleta.
-3. **Criterio de eliminación:** solo la mejor mitad se reproduce.
-4. **Mutación por bloques de gaps:** insertar, mover o eliminar columnas
-   de solo gaps.
-5. **Inmigrantes aleatorios:** individuos nuevos cuando hay estancamiento.
-6. **Elitismo:** los mejores pasan intactos y tienen cruza garantizada.
+1. **Selección por torneo:** en vez de ruleta; toma varios individuos al
+   azar y elige el de mayor fitness (mejor presión selectiva).
+2. **Mutación por bloques de gaps:** en vez de mover un solo gap, inserta
+   un bloque, mueve un bloque o elimina columnas de solo gaps.
+3. **Elitismo:** los mejores individuos pasan intactos a la siguiente
+   generación, así nunca se pierde la mejor solución.
 
 ## Cómo ejecutar
 

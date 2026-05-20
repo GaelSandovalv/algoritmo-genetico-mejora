@@ -7,7 +7,7 @@ import os
 import random
 
 import matplotlib
-matplotlib.use("Agg")  # genera la grafica como imagen, sin depender de tkinter
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 BASES = "ACGT"
@@ -24,13 +24,13 @@ def generar_secuencias(semilla=42, n=4, longitud_ancestro=12):
     secuencias = []
     for _ in range(n):
         s = list(ancestro)
-        for _ in range(rng.randint(1, 2)):          # sustituciones
+        for _ in range(rng.randint(1, 2)):
             i = rng.randrange(len(s))
             s[i] = rng.choice(BASES)
-        for _ in range(rng.randint(0, 1)):          # eliminaciones
+        for _ in range(rng.randint(0, 1)):
             if len(s) > 1:
                 del s[rng.randrange(len(s))]
-        for _ in range(rng.randint(0, 1)):          # inserciones
+        for _ in range(rng.randint(0, 1)):
             s.insert(rng.randrange(len(s) + 1), rng.choice(BASES))
         secuencias.append("".join(s))
     return secuencias
@@ -190,33 +190,13 @@ def ag_base(originales, tam_poblacion=60, generaciones=250,
 
 
 def seleccion_torneo(poblacion, fitnesses, rng, tam_torneo=3):
-    """Mejora #2: seleccion por torneo. Toma tam_torneo individuos
+    """Mejora 1 (seleccion por torneo): toma tam_torneo individuos
     distintos al azar y devuelve el de mayor fitness.
     """
     k = min(tam_torneo, len(poblacion))
     indices = rng.sample(range(len(poblacion)), k)
     mejor = max(indices, key=lambda idx: fitnesses[idx])
     return poblacion[mejor]
-
-
-def cruza_multipunto(padre1, padre2, rng):
-    """Mejora #1: cruza con varios puntos de corte (3 a 5) sobre las
-    filas, tomando segmentos alternados de cada padre. Cada fila se copia
-    intacta de un padre, asi que la integridad se conserva.
-    """
-    n = len(padre1)
-    max_cortes = min(5, n - 1)
-    num_cortes = rng.randint(min(3, max_cortes), max_cortes)
-    puntos = sorted(rng.sample(range(1, n), num_cortes))
-    hijo = []
-    usar_padre1 = True
-    inicio = 0
-    for punto in puntos + [n]:
-        fuente = padre1 if usar_padre1 else padre2
-        hijo.extend(fuente[inicio:punto])
-        inicio = punto
-        usar_padre1 = not usar_padre1
-    return igualar_longitud(hijo)
 
 
 def insertar_bloque_gaps(individuo, rng, tam_bloque=3):
@@ -279,14 +259,13 @@ def eliminar_columnas_gaps(individuo):
 
 
 def mutacion_bloques(individuo, rng, longitud_maxima):
-    """Mejora #4: mutacion por bloques de gaps. Elige al azar entre
+    """Mejora 2 (mutacion por bloques de gaps): elige al azar entre
     insertar un bloque, mover un bloque o eliminar columnas de solo gaps.
     Si el individuo ya alcanzo longitud_maxima, compacta en lugar de
     insertar para no crecer sin control.
     """
     operacion = rng.choice(["insertar", "mover", "eliminar"])
     longitud_actual = max(len(f) for f in individuo)
-    # insertar_bloque_gaps anade 3 gaps: si eso superaria el limite, compactar
     if operacion == "insertar" and longitud_actual + 3 > longitud_maxima:
         operacion = "eliminar"
     if operacion == "insertar":
@@ -297,16 +276,13 @@ def mutacion_bloques(individuo, rng, longitud_maxima):
 
 
 def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
-                prob_mutacion=0.3, semilla=1, num_elite=4,
-                tam_torneo=3, paciencia=20):
-    """Algoritmo genetico MEJORADO con seis mejoras:
+                prob_mutacion=0.3, semilla=1, num_elite=4, tam_torneo=3):
+    """Algoritmo genetico MEJORADO con tres mejoras sobre el base:
 
-    1. Cruza multipunto (3 a 5 puntos de corte).
-    2. Seleccion por torneo.
-    3. Criterio de eliminacion: solo la mejor mitad se reproduce.
-    4. Mutacion por bloques de gaps.
-    5. Inmigrantes aleatorios cuando hay estancamiento.
-    6. Elitismo: los mejores pasan intactos y tienen cruza garantizada.
+    1. Seleccion por torneo en lugar de ruleta.
+    2. Mutacion por bloques de gaps en lugar de mover un solo gap.
+    3. Elitismo: los mejores individuos pasan intactos a la siguiente
+       generacion, asi nunca se pierde la mejor solucion encontrada.
 
     Devuelve (mejor_individuo_encontrado, historial_de_mejor_fitness).
     """
@@ -318,14 +294,12 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
     historial = []
     mejor_global = None
     mejor_fit_global = float("-inf")
-    generaciones_sin_mejora = 0
     for gen in range(generaciones):
         fitnesses = [calcular_fitness(ind) for ind in poblacion]
         for ind in poblacion:
             if not validar_integridad(ind, originales):
                 raise ValueError(
                     f"Integridad violada en AG mejorado, generacion {gen}")
-        # ordenar la poblacion de mejor a peor fitness
         orden = sorted(range(len(poblacion)),
                        key=lambda k: fitnesses[k], reverse=True)
         poblacion = [poblacion[k] for k in orden]
@@ -335,36 +309,15 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
         if fit_mejor > mejor_fit_global:
             mejor_fit_global = fit_mejor
             mejor_global = poblacion[0]
-            generaciones_sin_mejora = 0
-        else:
-            generaciones_sin_mejora += 1
-        # Mejora #3: solo la mejor mitad se usa como reserva de padres
-        reserva = poblacion[:max(2, tam_poblacion // 2)]
-        reserva_fit = fitnesses[:len(reserva)]
-        # Mejora #6: elitismo - los mejores pasan intactos
         nueva = list(poblacion[:num_elite])
-        # Mejora #6: cada elite tiene cruza garantizada
-        for elite in poblacion[:num_elite]:
-            pareja = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
-            hijo = cruza_multipunto(elite, pareja, rng)
-            if rng.random() < prob_mutacion:
-                hijo = mutacion_bloques(hijo, rng, longitud_maxima)
-            nueva.append(hijo)
-        # Mejora #5: inmigrantes aleatorios si hay estancamiento
-        if generaciones_sin_mejora >= paciencia:
-            for _ in range(tam_poblacion // 5):
-                nueva.append(crear_individuo(originales,
-                                             longitud_inicial, rng))
-            generaciones_sin_mejora = 0
-        # rellenar el resto con cruza y mutacion
         while len(nueva) < tam_poblacion:
-            p1 = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
-            p2 = seleccion_torneo(reserva, reserva_fit, rng, tam_torneo)
-            hijo = cruza_multipunto(p1, p2, rng)
+            p1 = seleccion_torneo(poblacion, fitnesses, rng, tam_torneo)
+            p2 = seleccion_torneo(poblacion, fitnesses, rng, tam_torneo)
+            hijo = cruza_un_punto(p1, p2, rng)
             if rng.random() < prob_mutacion:
                 hijo = mutacion_bloques(hijo, rng, longitud_maxima)
             nueva.append(hijo)
-        poblacion = nueva[:tam_poblacion]
+        poblacion = nueva
     return mejor_global, historial
 
 
