@@ -216,3 +216,79 @@ def cruza_multipunto(padre1, padre2, rng):
         inicio = punto
         usar_padre1 = not usar_padre1
     return igualar_longitud(hijo)
+
+
+def insertar_bloque_gaps(individuo, rng, tam_bloque=3):
+    """Inserta un bloque de gaps en una fila al azar. Las demas filas se
+    rellenan con gaps finales para igualar la longitud.
+    """
+    individuo = list(individuo)
+    idx = rng.randrange(len(individuo))
+    fila = list(individuo[idx])
+    pos = rng.randrange(len(fila) + 1)
+    for _ in range(tam_bloque):
+        fila.insert(pos, "-")
+    individuo[idx] = "".join(fila)
+    return igualar_longitud(individuo)
+
+
+def mover_bloque_gaps(individuo, rng, tam_bloque=3):
+    """Mueve un bloque contiguo de gaps a otra posicion dentro de la
+    misma fila. No cambia la longitud de la fila.
+    """
+    individuo = list(individuo)
+    indices = list(range(len(individuo)))
+    rng.shuffle(indices)
+    for idx in indices:
+        fila = individuo[idx]
+        bloques = []
+        k = 0
+        while k < len(fila):
+            if fila[k] == "-":
+                inicio = k
+                while k < len(fila) and fila[k] == "-":
+                    k += 1
+                bloques.append((inicio, k - inicio))
+            else:
+                k += 1
+        if not bloques:
+            continue
+        inicio, longitud = rng.choice(bloques)
+        mover = min(tam_bloque, longitud)
+        lista = list(fila)
+        del lista[inicio:inicio + mover]
+        nueva_pos = rng.randrange(len(lista) + 1)
+        for _ in range(mover):
+            lista.insert(nueva_pos, "-")
+        individuo[idx] = "".join(lista)
+        return individuo
+    return individuo
+
+
+def eliminar_columnas_gaps(individuo):
+    """Elimina las columnas que son gap en todas las filas (compactacion)."""
+    individuo = igualar_longitud(individuo)
+    longitud = len(individuo[0])
+    quitar = {c for c in range(longitud)
+              if all(fila[c] == "-" for fila in individuo)}
+    if not quitar:
+        return individuo
+    return ["".join(ch for c, ch in enumerate(fila) if c not in quitar)
+            for fila in individuo]
+
+
+def mutacion_bloques(individuo, rng, longitud_maxima):
+    """Mejora #4: mutacion por bloques de gaps. Elige al azar entre
+    insertar un bloque, mover un bloque o eliminar columnas de solo gaps.
+    Si el individuo ya alcanzo longitud_maxima, compacta en lugar de
+    insertar para no crecer sin control.
+    """
+    operacion = rng.choice(["insertar", "mover", "eliminar"])
+    longitud_actual = max(len(f) for f in individuo)
+    if operacion == "insertar" and longitud_actual >= longitud_maxima:
+        operacion = "eliminar"
+    if operacion == "insertar":
+        return insertar_bloque_gaps(individuo, rng)
+    if operacion == "mover":
+        return mover_bloque_gaps(individuo, rng)
+    return eliminar_columnas_gaps(individuo)
