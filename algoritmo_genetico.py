@@ -73,3 +73,29 @@ def calcular_fitness(individuo):
                 else:
                     puntaje += -1
     return puntaje
+
+
+def igualar_longitud(individuo):
+    """Rellena cada fila con gaps al final hasta que todas midan lo mismo."""
+    longitud = max(len(fila) for fila in individuo)
+    return [fila + "-" * (longitud - len(fila)) for fila in individuo]
+
+
+def crear_individuo(originales, longitud, rng):
+    """Crea un individuo insertando gaps al azar en cada secuencia hasta
+    alcanzar la longitud indicada. 'longitud' debe ser >= la secuencia
+    mas larga.
+    """
+    individuo = []
+    for original in originales:
+        fila = list(original)
+        for _ in range(longitud - len(fila)):
+            fila.insert(rng.randrange(len(fila) + 1), "-")
+        individuo.append("".join(fila))
+    return individuo
+
+
+def crear_poblacion(originales, tam_poblacion, longitud, rng):
+    """Crea una poblacion de individuos aleatorios."""
+    return [crear_individuo(originales, longitud, rng)
+            for _ in range(tam_poblacion)]
