@@ -1,6 +1,7 @@
 # Internos de Claude Code y documentos de trabajo
 .claude/
 docs/
+!docs/imagenes/
 GUION_VIDEO.md
 ENTREGA.md
 
