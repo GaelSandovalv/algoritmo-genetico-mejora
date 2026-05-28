@@ -334,5 +334,29 @@ def comparar(semilla_datos=42, semilla_ag=1, tam_poblacion=40,
     return hist_base, hist_mej
 
 
+def ejecutar_benchmark(originales, n_corridas=30, tam_poblacion=40,
+                       generaciones=100):
+    resultado = {
+        "base": {"fitness": [], "tiempo": [], "diversidad": []},
+        "mejorado": {"fitness": [], "tiempo": [], "diversidad": []},
+    }
+    for semilla in range(n_corridas):
+        for nombre, ag in (("base", ag_base), ("mejorado", ag_mejorado)):
+            fits = []
+            tiempos = []
+            divs = []
+            def cb(gen, poblacion, fitnesses, tiempo_ms,
+                   _f=fits, _t=tiempos, _d=divs):
+                _f.append(max(fitnesses))
+                _t.append(tiempo_ms)
+                _d.append(diversidad_poblacion(poblacion))
+            ag(originales, tam_poblacion=tam_poblacion,
+               generaciones=generaciones, semilla=semilla, callback=cb)
+            resultado[nombre]["fitness"].append(fits)
+            resultado[nombre]["tiempo"].append(tiempos)
+            resultado[nombre]["diversidad"].append(divs)
+    return resultado
+
+
 if __name__ == "__main__":
     comparar()
