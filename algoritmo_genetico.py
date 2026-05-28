@@ -358,5 +358,67 @@ def ejecutar_benchmark(originales, n_corridas=30, tam_poblacion=40,
     return resultado
 
 
+def _promedio_y_std(matriz):
+    n_corridas = len(matriz)
+    n_cols = len(matriz[0])
+    promedio = []
+    std = []
+    for c in range(n_cols):
+        valores = [matriz[r][c] for r in range(n_corridas)]
+        media = sum(valores) / n_corridas
+        var = sum((v - media) ** 2 for v in valores) / n_corridas
+        promedio.append(media)
+        std.append(var ** 0.5)
+    return promedio, std
+
+
+def graficar_convergencia_promedio(datos, archivo):
+    plt.figure(figsize=(10, 6))
+    for clave, color in (("base", "#d62728"), ("mejorado", "#2ca02c")):
+        promedio, std = _promedio_y_std(datos[clave]["fitness"])
+        x = list(range(1, len(promedio) + 1))
+        plt.plot(x, promedio, label=f"AG {clave.capitalize()}", color=color)
+        banda_sup = [p + s for p, s in zip(promedio, std)]
+        banda_inf = [p - s for p, s in zip(promedio, std)]
+        plt.fill_between(x, banda_inf, banda_sup, alpha=0.2, color=color)
+    plt.xlabel("Generacion")
+    plt.ylabel("Mejor fitness (promedio de N corridas)")
+    plt.title("Convergencia: AG Base vs AG Mejorado (promedio +/- 1 std)")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig(archivo, dpi=120, bbox_inches="tight")
+    plt.close()
+
+
+def graficar_tiempo(datos, archivo):
+    plt.figure(figsize=(10, 6))
+    for clave, color in (("base", "#d62728"), ("mejorado", "#2ca02c")):
+        promedio, _ = _promedio_y_std(datos[clave]["tiempo"])
+        x = list(range(1, len(promedio) + 1))
+        plt.plot(x, promedio, label=f"AG {clave.capitalize()}", color=color)
+    plt.xlabel("Generacion")
+    plt.ylabel("Tiempo por generacion (ms, promedio)")
+    plt.title("Costo computacional por generacion")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig(archivo, dpi=120, bbox_inches="tight")
+    plt.close()
+
+
+def graficar_diversidad(datos, archivo):
+    plt.figure(figsize=(10, 6))
+    for clave, color in (("base", "#d62728"), ("mejorado", "#2ca02c")):
+        promedio, _ = _promedio_y_std(datos[clave]["diversidad"])
+        x = list(range(1, len(promedio) + 1))
+        plt.plot(x, promedio, label=f"AG {clave.capitalize()}", color=color)
+    plt.xlabel("Generacion")
+    plt.ylabel("Individuos unicos en la poblacion (promedio)")
+    plt.title("Diversidad de poblacion por generacion")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig(archivo, dpi=120, bbox_inches="tight")
+    plt.close()
+
+
 if __name__ == "__main__":
     comparar()
