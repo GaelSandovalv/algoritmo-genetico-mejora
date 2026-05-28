@@ -77,6 +77,10 @@ def crear_poblacion(originales, tam_poblacion, longitud, rng):
             for _ in range(tam_poblacion)]
 
 
+def diversidad_poblacion(poblacion):
+    return len({tuple(individuo) for individuo in poblacion})
+
+
 def seleccion_ruleta(poblacion, fitnesses, rng):
     minimo = min(fitnesses)
     pesos = [f - minimo + 1 for f in fitnesses]
