@@ -445,5 +445,32 @@ def ejecutar_sensibilidad(originales, config, n_corridas=10,
     return resultado
 
 
+def graficar_sensibilidad(resultado, archivo):
+    parametros = list(resultado.keys())
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    ejes = axes.flatten()
+    for i, parametro in enumerate(parametros[:4]):
+        ax = ejes[i]
+        valores = list(resultado[parametro].keys())
+        medias = [resultado[parametro][v]["fitness_promedio"] for v in valores]
+        stds = [resultado[parametro][v]["fitness_std"] for v in valores]
+        etiquetas = [str(v) for v in valores]
+        x = list(range(len(valores)))
+        ax.bar(x, medias, yerr=stds, capsize=4, color="#2ca02c", alpha=0.8)
+        ax.set_xticks(x)
+        ax.set_xticklabels(etiquetas)
+        ax.set_xlabel(parametro)
+        ax.set_ylabel("Fitness final (promedio)")
+        ax.set_title(f"Sensibilidad: {parametro}")
+        ax.grid(True, alpha=0.3, axis="y")
+    for j in range(len(parametros), 4):
+        ejes[j].axis("off")
+    fig.suptitle("Estudio de sensibilidad de parametros (AG Mejorado)",
+                 fontsize=14)
+    fig.tight_layout()
+    fig.savefig(archivo, dpi=120, bbox_inches="tight")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     comparar()
