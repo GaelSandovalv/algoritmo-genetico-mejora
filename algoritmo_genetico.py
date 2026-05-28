@@ -420,5 +420,30 @@ def graficar_diversidad(datos, archivo):
     plt.close()
 
 
+def ejecutar_sensibilidad(originales, config, n_corridas=10,
+                          tam_poblacion=40, generaciones=100):
+    resultado = {}
+    for parametro, valores in config.items():
+        resultado[parametro] = {}
+        for valor in valores:
+            fitnesses_finales = []
+            for semilla in range(n_corridas):
+                kwargs = {
+                    "tam_poblacion": tam_poblacion,
+                    "generaciones": generaciones,
+                    "semilla": semilla,
+                }
+                kwargs[parametro] = valor
+                _, historial = ag_mejorado(originales, **kwargs)
+                fitnesses_finales.append(historial[-1])
+            media = sum(fitnesses_finales) / n_corridas
+            var = sum((f - media) ** 2 for f in fitnesses_finales) / n_corridas
+            resultado[parametro][valor] = {
+                "fitness_promedio": float(media),
+                "fitness_std": float(var ** 0.5),
+            }
+    return resultado
+
+
 if __name__ == "__main__":
     comparar()
