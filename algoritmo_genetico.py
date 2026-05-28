@@ -1,3 +1,4 @@
+import argparse
 import os
 import random
 import time
@@ -472,5 +473,55 @@ def graficar_sensibilidad(resultado, archivo):
     plt.close(fig)
 
 
+def parsear_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Algoritmo genetico para alineamiento de secuencias.")
+    grupo = parser.add_mutually_exclusive_group()
+    grupo.add_argument("--benchmark", action="store_true",
+                       help="Corre 30 repeticiones y genera graficos "
+                            "de convergencia, tiempo y diversidad.")
+    grupo.add_argument("--sensibilidad", action="store_true",
+                       help="Hace barrido de parametros y genera grafico "
+                            "de sensibilidad 2x2.")
+    return parser.parse_args(argv)
+
+
 if __name__ == "__main__":
-    comparar()
+    args = parsear_args()
+    if args.benchmark:
+        originales = generar_secuencias(42)
+        print(f"Ejecutando benchmark (N=30 corridas por algoritmo)...")
+        datos = ejecutar_benchmark(originales, n_corridas=30,
+                                   tam_poblacion=40, generaciones=100)
+        os.makedirs("docs/imagenes", exist_ok=True)
+        graficar_convergencia_promedio(
+            datos, "docs/imagenes/convergencia_promedio.png")
+        graficar_tiempo(datos, "docs/imagenes/tiempo_por_generacion.png")
+        graficar_diversidad(datos, "docs/imagenes/diversidad_poblacion.png")
+        for clave in ("base", "mejorado"):
+            fits_finales = [f[-1] for f in datos[clave]["fitness"]]
+            media = sum(fits_finales) / len(fits_finales)
+            var = sum((f - media) ** 2 for f in fits_finales) / len(fits_finales)
+            print(f"AG {clave}: fitness final {media:.2f} +/- {var ** 0.5:.2f}")
+        print("Graficos en docs/imagenes/")
+    elif args.sensibilidad:
+        originales = generar_secuencias(42)
+        config = {
+            "tam_poblacion": [10, 20, 40, 80, 160],
+            "generaciones": [25, 50, 100, 200, 400],
+            "prob_mutacion": [0.05, 0.1, 0.3, 0.5, 0.8],
+            "tam_torneo": [2, 3, 5, 7, 10],
+        }
+        print("Ejecutando estudio de sensibilidad...")
+        resultado = ejecutar_sensibilidad(originales, config, n_corridas=10)
+        os.makedirs("docs/imagenes", exist_ok=True)
+        graficar_sensibilidad(resultado,
+                              "docs/imagenes/sensibilidad_parametros.png")
+        for parametro, valores in resultado.items():
+            print(f"\n{parametro}:")
+            for valor, datos in valores.items():
+                print(f"  {valor}: fitness {datos['fitness_promedio']:.2f} "
+                      f"+/- {datos['fitness_std']:.2f}")
+        print("\nGrafico en docs/imagenes/sensibilidad_parametros.png")
+    else:
+        comparar()
