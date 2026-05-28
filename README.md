@@ -49,6 +49,12 @@ el visor de imágenes del sistema.
 
 ![Comparación de fitness](comparacion_fitness.png)
 
+## Análisis completo
+
+Para complejidad teórica (Big O), gráficos de desempeño (convergencia,
+tiempo, diversidad), estudio de sensibilidad de parámetros y diagramas
+UML, ver [`ANALISIS.md`](ANALISIS.md).
+
 ## Video de demostración
 
 🎥 Link del video: _PENDIENTE_
