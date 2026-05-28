@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 import matplotlib
 matplotlib.use("Agg")
@@ -118,7 +119,7 @@ def mutacion_mover_gap(individuo, rng):
 
 
 def ag_base(originales, tam_poblacion=60, generaciones=250,
-            prob_mutacion=0.3, semilla=1):
+            prob_mutacion=0.3, semilla=1, callback=None):
     rng = random.Random(semilla)
     longitud = max(len(s) for s in originales) + 6
     poblacion = crear_poblacion(originales, tam_poblacion, longitud, rng)
@@ -126,6 +127,7 @@ def ag_base(originales, tam_poblacion=60, generaciones=250,
     mejor_global = None
     mejor_fit_global = float("-inf")
     for gen in range(generaciones):
+        inicio = time.perf_counter()
         fitnesses = [calcular_fitness(ind) for ind in poblacion]
         for ind in poblacion:
             if not validar_integridad(ind, originales):
@@ -145,6 +147,9 @@ def ag_base(originales, tam_poblacion=60, generaciones=250,
             if rng.random() < prob_mutacion:
                 hijo = mutacion_mover_gap(hijo, rng)
             nueva.append(hijo)
+        tiempo_ms = (time.perf_counter() - inicio) * 1000
+        if callback is not None:
+            callback(gen, poblacion, fitnesses, tiempo_ms)
         poblacion = nueva
     return mejor_global, historial
 
@@ -221,7 +226,8 @@ def mutacion_bloques(individuo, rng, longitud_maxima):
 
 
 def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
-                prob_mutacion=0.3, semilla=1, num_elite=4, tam_torneo=3):
+                prob_mutacion=0.3, semilla=1, num_elite=4, tam_torneo=3,
+                callback=None):
     rng = random.Random(semilla)
     longitud_inicial = max(len(s) for s in originales) + 6
     longitud_maxima = 2 * longitud_inicial
@@ -231,6 +237,7 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
     mejor_global = None
     mejor_fit_global = float("-inf")
     for gen in range(generaciones):
+        inicio = time.perf_counter()
         fitnesses = [calcular_fitness(ind) for ind in poblacion]
         for ind in poblacion:
             if not validar_integridad(ind, originales):
@@ -253,6 +260,9 @@ def ag_mejorado(originales, tam_poblacion=60, generaciones=250,
             if rng.random() < prob_mutacion:
                 hijo = mutacion_bloques(hijo, rng, longitud_maxima)
             nueva.append(hijo)
+        tiempo_ms = (time.perf_counter() - inicio) * 1000
+        if callback is not None:
+            callback(gen, poblacion, fitnesses, tiempo_ms)
         poblacion = nueva
     return mejor_global, historial
 
