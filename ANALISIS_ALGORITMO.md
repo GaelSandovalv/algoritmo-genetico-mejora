@@ -1,7 +1,7 @@
 # Análisis del algoritmo
 
-Descripción del problema, pseudocódigo de las dos versiones del algoritmo
-genético y análisis de complejidad teórica (Big O).
+Descripción del problema, análisis de complejidad teórica (Big O) y
+decisiones de diseño del algoritmo genético del proyecto.
 
 Documento complementario de [`ANALISIS.md`](ANALISIS.md), enfocado solo en
 el algoritmo. Para gráficos ver [`GRAFICOS_DESEMPENO.md`](GRAFICOS_DESEMPENO.md);
@@ -28,71 +28,7 @@ El fitness total es la suma sobre todos los pares y columnas. Es negativo
 cuando el alineamiento es malo, y crece (puede ser positivo) cuando hay
 muchas coincidencias.
 
-## 2. Pseudocódigo
-
-### 2.1 AG Base
-
-```
-funcion ag_base(originales, tam_poblacion, generaciones, prob_mutacion):
-    poblacion := crear_poblacion(originales, tam_poblacion, longitud_fija)
-    historial := []
-    para gen en 0 .. generaciones - 1:
-        fitnesses := [calcular_fitness(ind) para ind en poblacion]
-        validar_integridad(cada individuo)
-        historial.append(max(fitnesses))
-        nueva := []
-        mientras |nueva| < tam_poblacion:
-            p1 := seleccion_ruleta(poblacion, fitnesses)
-            p2 := seleccion_ruleta(poblacion, fitnesses)
-            hijo := cruza_un_punto(p1, p2)
-            si random() < prob_mutacion:
-                hijo := mutacion_mover_gap(hijo)
-            nueva.append(hijo)
-        poblacion := nueva
-    devolver mejor_individuo_global, historial
-```
-
-### 2.2 AG Mejorado
-
-Tres diferencias respecto al base: **selección por torneo**, **mutación
-por bloques de gaps** y **elitismo**.
-
-```
-funcion ag_mejorado(originales, tam_poblacion, generaciones,
-                    prob_mutacion, num_elite, tam_torneo):
-    poblacion := crear_poblacion(originales, tam_poblacion, longitud_inicial)
-    longitud_maxima := 2 * longitud_inicial
-    historial := []
-    para gen en 0 .. generaciones - 1:
-        fitnesses := [calcular_fitness(ind) para ind en poblacion]
-        validar_integridad(cada individuo)
-        ordenar poblacion y fitnesses por fitness descendente
-        historial.append(fitnesses[0])
-        nueva := poblacion[0 .. num_elite - 1]    # elitismo
-        mientras |nueva| < tam_poblacion:
-            p1 := seleccion_torneo(poblacion, fitnesses, tam_torneo)
-            p2 := seleccion_torneo(poblacion, fitnesses, tam_torneo)
-            hijo := cruza_un_punto(p1, p2)
-            si random() < prob_mutacion:
-                hijo := mutacion_bloques(hijo, longitud_maxima)
-            nueva.append(hijo)
-        poblacion := nueva
-    devolver mejor_individuo_global, historial
-```
-
-**`mutacion_bloques`** elige aleatoriamente entre tres operadores:
-
-- `insertar_bloque_gaps`: inserta un bloque corto de gaps en una posición
-  aleatoria de una fila (respetando `longitud_maxima`).
-- `mover_bloque_gaps`: localiza un bloque de gaps consecutivos y lo
-  reubica dentro de la misma fila.
-- `eliminar_columnas_gaps`: elimina las columnas que son `-` en todas las
-  filas (limpieza que acorta el alineamiento sin alterar contenido).
-
-**`seleccion_torneo`** toma `tam_torneo` individuos al azar y devuelve el
-de mayor fitness — presión selectiva controlable por `tam_torneo`.
-
-## 3. Complejidad teórica (Big O)
+## 2. Complejidad teórica (Big O)
 
 Notación:
 
@@ -130,7 +66,7 @@ despreciable.
 `O(P · S · L)` — la población completa más una nueva generación en
 construcción.
 
-## 4. Decisiones de diseño
+## 3. Decisiones de diseño
 
 - **Longitud constante por generación.** El AG Base fija `L = max(|sᵢ|) + 6`
   desde el inicio. El AG Mejorado parte igual, pero permite crecer hasta
